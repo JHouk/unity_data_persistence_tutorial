@@ -10,6 +10,7 @@ public class MainManager : MonoBehaviour
     public int LineCount = 6;
     public Rigidbody Ball;
 
+    public Text HighScoreText;
     public Text ScoreText;
     public GameObject GameOverText;
     
@@ -36,36 +37,46 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        UpdateScoreDisplay();
     }
 
     private void Update()
     {
-        if (!m_Started)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                m_Started = true;
-                float randomDirection = Random.Range(-1.0f, 1.0f);
-                Vector3 forceDir = new Vector3(randomDirection, 1, 0);
-                forceDir.Normalize();
+        // At any time, if the user presses escape, quit back to main menu.
+        // This will actually be prompted when they lose.
+        if(Input.GetKeyDown(KeyCode.Escape)) {
+            QuitGameScene();
+        } else if (!m_Started && Input.GetKeyDown(KeyCode.Space)) {
+            m_Started = true;
+            float randomDirection = Random.Range(-1.0f, 1.0f);
+            Vector3 forceDir = new Vector3(randomDirection, 1, 0);
+            forceDir.Normalize();
 
-                Ball.transform.SetParent(null);
-                Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
-            }
-        }
-        else if (m_GameOver)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            }
-        }
+            Ball.transform.SetParent(null);
+            Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+        } else if (m_GameOver && Input.GetKeyDown(KeyCode.Space)) {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        } 
     }
 
+    private void QuitGameScene(){
+        if(m_Points > ScoreManager.HighScore && !ScoreManager.PlayerName.Equals("")){
+            ScoreManager.HighScore = m_Points;
+            ScoreManager.LeaderName = ScoreManager.PlayerName;
+        }
+        SceneManager.LoadScene("menu");
+    }
+    
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        UpdateScoreDisplay();
+    }
+
+    void UpdateScoreDisplay(){
+        HighScoreText.text = $"Best Score: {ScoreManager.LeaderName} : {ScoreManager.HighScore}";
+        ScoreText.text = $"{ScoreManager.PlayerName} : {m_Points}";
     }
 
     public void GameOver()
